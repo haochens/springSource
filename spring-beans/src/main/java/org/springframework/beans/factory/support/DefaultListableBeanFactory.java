@@ -787,6 +787,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		Assert.hasText(beanName, "Bean name must not be empty");
 		Assert.notNull(beanDefinition, "BeanDefinition must not be null");
 
+		/*
+		 * BeanDefiniton  的校验，具体来说，是对AbstractBeanDefinition属性中的methodOverrides 效验;
+		 * 效验methodOverrides 是否与工厂方法并存或者methodOverrides对应的方法根本不存在。
+		 */
 		if (beanDefinition instanceof AbstractBeanDefinition) {
 			try {
 				((AbstractBeanDefinition) beanDefinition).validate();
@@ -797,6 +801,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			}
 		}
 
+
+		/*
+		*对容器中已经存在了一个同名bean的处理方法。
+		* 如果对应beanName已经注册 并且beanName不能被覆盖,则抛出异常，否则后注册的覆盖先注册的。
+		*/
 		BeanDefinition existingDefinition = this.beanDefinitionMap.get(beanName);
 		if (existingDefinition != null) {
 			if (!isAllowBeanDefinitionOverriding()) {
@@ -829,6 +838,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			this.beanDefinitionMap.put(beanName, beanDefinition);
 		}
 		else {
+			/**
+			 * 正常情况的处理流程，这里会将beanName和beanDefinition放到beanDefinitionMap中，
+			 * 此时的beanDefinitionMap中已经存在了6个beanDefinition
+			 */
 			if (hasBeanCreationStarted()) {
 				// Cannot modify startup-time collection elements anymore (for stable iteration)
 				synchronized (this.beanDefinitionMap) {

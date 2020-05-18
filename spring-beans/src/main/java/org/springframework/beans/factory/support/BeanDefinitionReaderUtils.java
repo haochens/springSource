@@ -147,12 +147,19 @@ public class BeanDefinitionReaderUtils {
 
 		// Register bean definition under primary name.
 		String beanName = definitionHolder.getBeanName();
+		/**
+		 * registerBeanDefinition方法是BeanDefinitionRegistry接口方法，他有多个实现类，
+		 * 由于AnnotationConfigApplicationContext继承了GenericApplicationContext，
+		 * 所以这里调用的是GenericApplicationContext的registerBeanDefinition方法。
+		 */
 		registry.registerBeanDefinition(beanName, definitionHolder.getBeanDefinition());
 
 		// Register aliases for bean name, if any.
+		//获取别名
 		String[] aliases = definitionHolder.getAliases();
 		if (aliases != null) {
 			for (String alias : aliases) {
+				//给bean注册别名用的
 				registry.registerAlias(beanName, alias);
 			}
 		}

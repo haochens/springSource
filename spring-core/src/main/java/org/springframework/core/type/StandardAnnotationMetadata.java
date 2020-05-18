@@ -55,6 +55,7 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 	}
 
 	/**
+	 * AnnotationMetadata的标准实现类StandardAnnotationMetadata,它使用标准的反射来获取制定类的内部注解信息。
 	 * Create a new {@link StandardAnnotationMetadata} wrapper for the given Class,
 	 * providing the option to return any nested annotations or annotation arrays in the
 	 * form of {@link org.springframework.core.annotation.AnnotationAttributes} instead
