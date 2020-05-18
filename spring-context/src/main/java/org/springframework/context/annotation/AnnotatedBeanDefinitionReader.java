@@ -215,7 +215,8 @@ public class AnnotatedBeanDefinitionReader {
 	<T> void doRegisterBean(Class<T> annotatedClass, @Nullable Supplier<T> instanceSupplier, @Nullable String name,
 			@Nullable Class<? extends Annotation>[] qualifiers, BeanDefinitionCustomizer... definitionCustomizers) {
 		/**
-		 * 根据指定的bean创建一个AnnootationGrenericBeanDefinition
+		 *
+		 * 根据指定的bean创建一个AnnootationGrenericBeanDefinition(将类转化为AnnotatedGenericBeanDefinition。)
 		 * 这个AnnootationGrenericBeanDefinition可以理解为一个数据结构
 		 * AnnootationGrenericBeanDefinition包含了类的其他信息，比如一些元信息
 		 * scope,lazy等
@@ -224,6 +225,9 @@ public class AnnotatedBeanDefinitionReader {
 		/**
 		 * 判断这个类是否跳过解析
 		 * 通过代码可以知道spring判断是否跳过解析，注意判断类有没有加注解
+		 * conditionEvaluator是在AnotatedBeanDefinitionReader类初始化的时候初始化的，
+		 * ConditionEvaluator这个类主要用于完成条件注解@Conditional的解析和判断。
+		 *  如果这个类没有被@Conditional注解所修饰，不会skip
 		 */
 		if (this.conditionEvaluator.shouldSkip(abd.getMetadata())) {
 			return;
@@ -238,7 +242,10 @@ public class AnnotatedBeanDefinitionReader {
 		 */
 		abd.setScope(scopeMetadata.getScopeName());
 		/**
-		 * 生成类的名字通过beanNameGenerator
+		 * 生成类的名字通过beanNameGenerator:
+		 * 这句代码生成bean的名称，beanNameGenerator是AnnotatedBeanDefinitionReader的一个成员变量，
+		 * 是类AnnotationBeanNameGenerator的一个实例。
+		 * AnnotationBeanNameGenerator实现了BeanNameGenerator接口的generateBeanName()方法
 		 */
 		String beanName = (name != null ? name : this.beanNameGenerator.generateBeanName(abd, this.registry));
 		/**
@@ -249,6 +256,12 @@ public class AnnotatedBeanDefinitionReader {
 		 */
 		AnnotationConfigUtils.processCommonDefinitionAnnotations(abd);
 
+		/*
+		 * 针对 @Qualifier注解的，一般情况下，@Autowired是根据类型进行自动装配的。
+		 * 如果当Spring上下文中存在不止一个该类型的bean时，就会抛出BeanCreationException异常。
+		 * @Qualifier可以配置自动依赖注入装配的限定条件，@Qualifier 可以直接指定注入 Bean 的名称，
+		 * 简单来说， @Autowired 和 @Qualifier 结合使用时，自动注入的策略就从 byType 转变成 byName 了。
+		 */
 		if (qualifiers != null) {
 			for (Class<? extends Annotation> qualifier : qualifiers) {
 				if (Primary.class == qualifier) {
@@ -262,12 +275,16 @@ public class AnnotatedBeanDefinitionReader {
 				}
 			}
 		}
+		//Spring 5允许使用lambda 表达式来自定义注册一个 bean
 		for (BeanDefinitionCustomizer customizer : definitionCustomizers) {
 			customizer.customize(abd);
 		}
 
+		//BeanDefination简单的封装为BeanDefinitionHolder。
 		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(abd, beanName);
+		//通过判断proxyMode的值为注册的Bean创建相应模式的代理对象。默认不创建。
 		definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
+		//this.registry：AnnotationConfigApplicationContext实例对象
 		BeanDefinitionReaderUtils.registerBeanDefinition(definitionHolder, this.registry);
 	}
 

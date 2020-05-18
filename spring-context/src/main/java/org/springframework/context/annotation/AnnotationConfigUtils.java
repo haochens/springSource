@@ -158,6 +158,7 @@ public class AnnotationConfigUtils {
 		}
 		Set<BeanDefinitionHolder> beanDefs = new LinkedHashSet<>(8);
 		//BeanDefinition的注册。这里很重要，需要理解注册每一个bean的类型
+		//"org.springframework.context.annotation.internalConfigurationAnnotationProcessor";
 		if (!registry.containsBeanDefinition(CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME)) {
 			//需要注意的是ConfigurationClassPostProcessor的类型是BeanDefinitionRegistryPostProcessor
 			//而BeanDefinitionRegistryPostProcessor最终实现的是BeanFactoryPostProcessor这个接口
@@ -166,12 +167,14 @@ public class AnnotationConfigUtils {
 			beanDefs.add(registerPostProcessor(registry, def, CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME));
 		}
 
+		//"org.springframework.context.annotation.internalAutowiredAnnotationProcessor";
 		if (!registry.containsBeanDefinition(AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME)) {
 			RootBeanDefinition def = new RootBeanDefinition(AutowiredAnnotationBeanPostProcessor.class);
 			def.setSource(source);
 			beanDefs.add(registerPostProcessor(registry, def, AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME));
 		}
 
+		//"org.springframework.context.annotation.internalRequiredAnnotationProcessor"
 		if (!registry.containsBeanDefinition(REQUIRED_ANNOTATION_PROCESSOR_BEAN_NAME)) {
 			RootBeanDefinition def = new RootBeanDefinition(RequiredAnnotationBeanPostProcessor.class);
 			def.setSource(source);
@@ -179,6 +182,7 @@ public class AnnotationConfigUtils {
 		}
 
 		// Check for JSR-250 support, and if present add the CommonAnnotationBeanPostProcessor.
+		//org.springframework.context.annotation.internalCommonAnnotationProcessor
 		if (jsr250Present && !registry.containsBeanDefinition(COMMON_ANNOTATION_PROCESSOR_BEAN_NAME)) {
 			RootBeanDefinition def = new RootBeanDefinition(CommonAnnotationBeanPostProcessor.class);
 			def.setSource(source);
@@ -186,6 +190,7 @@ public class AnnotationConfigUtils {
 		}
 
 		// Check for JPA support, and if present add the PersistenceAnnotationBeanPostProcessor.
+		//"org.springframework.context.annotation.internalPersistenceAnnotationProcessor"
 		if (jpaPresent && !registry.containsBeanDefinition(PERSISTENCE_ANNOTATION_PROCESSOR_BEAN_NAME)) {
 			RootBeanDefinition def = new RootBeanDefinition();
 			try {
@@ -199,13 +204,13 @@ public class AnnotationConfigUtils {
 			def.setSource(source);
 			beanDefs.add(registerPostProcessor(registry, def, PERSISTENCE_ANNOTATION_PROCESSOR_BEAN_NAME));
 		}
-
+		//"org.springframework.context.event.internalEventListenerProcessor";
 		if (!registry.containsBeanDefinition(EVENT_LISTENER_PROCESSOR_BEAN_NAME)) {
 			RootBeanDefinition def = new RootBeanDefinition(EventListenerMethodProcessor.class);
 			def.setSource(source);
 			beanDefs.add(registerPostProcessor(registry, def, EVENT_LISTENER_PROCESSOR_BEAN_NAME));
 		}
-
+		//"org.springframework.context.event.internalEventListenerFactory";
 		if (!registry.containsBeanDefinition(EVENT_LISTENER_FACTORY_BEAN_NAME)) {
 			RootBeanDefinition def = new RootBeanDefinition(DefaultEventListenerFactory.class);
 			def.setSource(source);
@@ -273,9 +278,21 @@ public class AnnotationConfigUtils {
 		}
 	}
 
+	/**
+	 * 当一个singleton作用域的bean中需要注入一个session作用域的bean的时候，会报错，
+	 * 应为此时应用没有人访问，session作用域bean没有创建，所以出现了问题。
+	 * spring提供给我们的解决方案就是通过设置proxyMode属性的值来解决，当他设置为ScopedProxyMode.
+	 * INTERFACES或者是ScopedProxyMode. TARGET_CLASS时，spring会为session作用域bean创建代理对象，
+	 * 而真正调用的bean则在运行时懒加载，两者的区别是一个使用JDK提供的动态代理实现，一个使用CGLIB实现。
+	 * 这段代码就是通过判断proxyMode的值为注册的Bean创建相应模式的代理对象。默认不创建。
+	 * @param metadata
+	 * @param definition
+	 * @param registry
+	 * @return
+	 */
 	static BeanDefinitionHolder applyScopedProxyMode(
 			ScopeMetadata metadata, BeanDefinitionHolder definition, BeanDefinitionRegistry registry) {
-
+		//这个值是在@scope注解中使用proxyMode属性设置的，默认为NO，就是没有代理。
 		ScopedProxyMode scopedProxyMode = metadata.getScopedProxyMode();
 		if (scopedProxyMode.equals(ScopedProxyMode.NO)) {
 			return definition;

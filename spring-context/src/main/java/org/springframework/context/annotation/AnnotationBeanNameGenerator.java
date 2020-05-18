@@ -65,7 +65,14 @@ public class AnnotationBeanNameGenerator implements BeanNameGenerator {
 
 	private static final String COMPONENT_ANNOTATION_CLASSNAME = "org.springframework.stereotype.Component";
 
-
+	/**
+	 * 如果不是AnnotationBeanDefinition，buildDefaultBeanName()方法直接将类名（不含包名）作为bean name。
+	 * 如果是的话，执行determineBeanNameFromAnnotation()，从注解上获得bean name。
+	 * @param definition the bean definition to generate a name for
+	 * @param registry the bean definition registry that the given definition
+	 * is supposed to be registered with
+	 * @return
+	 */
 	@Override
 	public String generateBeanName(BeanDefinition definition, BeanDefinitionRegistry registry) {
 		if (definition instanceof AnnotatedBeanDefinition) {

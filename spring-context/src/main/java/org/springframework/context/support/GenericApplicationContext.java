@@ -314,6 +314,11 @@ public class GenericApplicationContext extends AbstractApplicationContext implem
 	// Implementation of BeanDefinitionRegistry
 	//---------------------------------------------------------------------
 
+	/**
+	 * this.beanFactory是在初始化GenericApplicationContext类时初始化的，是一个DefaultListableBeanFactory。
+	 * DefaultListableBeanFactory也实现了BeanDefinitionRegistry接口的registerBeanDefinition方法，
+	 * 所以最终调用的是DefaultListableBeanFactory的registerBeanDefinition方法。
+	 */
 	@Override
 	public void registerBeanDefinition(String beanName, BeanDefinition beanDefinition)
 			throws BeanDefinitionStoreException {

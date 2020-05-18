@@ -76,9 +76,14 @@ public class AnnotationScopeMetadataResolver implements ScopeMetadataResolver {
 
 	@Override
 	public ScopeMetadata resolveScopeMetadata(BeanDefinition definition) {
+		//ScopeMetadata中默认的scope是singleton
 		ScopeMetadata metadata = new ScopeMetadata();
+		//
 		if (definition instanceof AnnotatedBeanDefinition) {
 			AnnotatedBeanDefinition annDef = (AnnotatedBeanDefinition) definition;
+			//this.scopeAnnotationType是AnnotationScopeMetadataResolver成员变量，值为Scope.class。
+			// 该方法就是从元数据中获得注解scope的值，并将其返回。如果没有配置@scope，
+			// 那么它的默认值就是singleton，即单例模式。
 			AnnotationAttributes attributes = AnnotationConfigUtils.attributesFor(
 					annDef.getMetadata(), this.scopeAnnotationType);
 			if (attributes != null) {
