@@ -44,27 +44,40 @@ public class SimpleAliasRegistry implements AliasRegistry {
 	protected final Log logger = LogFactory.getLog(getClass());
 
 	/** Map from alias to canonical name */
+	//别名-规范名称的映射MAP，用于存储注册信息（内存注册表）
 	private final Map<String, String> aliasMap = new ConcurrentHashMap<>(16);
 
-
+	/**
+	 * 注册表中注册别名
+	 * @param name the canonical name
+	 * @param alias the alias to be registered
+	 */
 	@Override
 	public void registerAlias(String name, String alias) {
 		Assert.hasText(name, "'name' must not be empty");
 		Assert.hasText(alias, "'alias' must not be empty");
+		//锁注册表
+		//因为CurrentHashMap只有put和remove是线程安全的
+		//此处要包装对CurrentHashMap的复合操作线程安全
 		synchronized (this.aliasMap) {
+			//判断别名与规范名称是否一样
 			if (alias.equals(name)) {
+				// 一样时，在注册表移除当前别名信息
 				this.aliasMap.remove(alias);
 				if (logger.isDebugEnabled()) {
 					logger.debug("Alias definition '" + alias + "' ignored since it points to same name");
 				}
 			}
 			else {
+				//获取当前别名在注册表中的规范名称
 				String registeredName = this.aliasMap.get(alias);
 				if (registeredName != null) {
+					//规范名称存在，不需要注册，返回
 					if (registeredName.equals(name)) {
 						// An existing alias - no need to re-register
 						return;
 					}
+					//判断是否允许重写注册
 					if (!allowAliasOverriding()) {
 						throw new IllegalStateException("Cannot define alias '" + alias + "' for name '" +
 								name + "': It is already registered for name '" + registeredName + "'.");
@@ -74,7 +87,9 @@ public class SimpleAliasRegistry implements AliasRegistry {
 								registeredName + "' with new target name '" + name + "'");
 					}
 				}
+				// 校验规范名称是否指向当前别名的
 				checkForAliasCircle(name, alias);
+				// 注册表注册别名与规范名称的映射
 				this.aliasMap.put(alias, name);
 				if (logger.isDebugEnabled()) {
 					logger.debug("Alias definition '" + alias + "' registered for name '" + name + "'");
